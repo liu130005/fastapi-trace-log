@@ -1,0 +1,33 @@
+
+sequenceDiagram
+    participant Client as HTTP Client
+    participant FastAPI as FastAPI App
+    participant TM as TraceMiddleware
+    participant TC as TraceContext
+    participant TL as TraceLogger
+    participant PD as PerformanceDecorator
+    participant JE as JaegerExporter
+    participant Config as Config
+    Client->>FastAPI: HTTP Request (with/without trace header)
+    FastAPI->>TM: __call__(scope, receive, send)
+    TM->>Config: load settings
+    TM->>TC: __init__()  # 创建TraceContext实例
+    alt 请求含trace头
+        TM->>TC: 使用传入trace_id
+    else
+        TM->>TC: 生成新trace_id
+    end
+    TM->>contextvars: 设置当前上下文
+    TM->>FastAPI: 继续处理请求（路由/中间件）
+    FastAPI->>PD: @trace_span('db_query')
+    PD->>TC: new_span('db_query')
+    PD->>FastAPI: 执行被装饰函数
+    FastAPI-->>PD: 返回结果
+    PD->>TC: close_span(span)
+    FastAPI->>TL: logger.info('Processing user request')
+    TL->>TC: 读取当前trace_id
+    TL->>logging: 输出含trace_id的日志
+    TM->>JE: 若启用且请求结束，export(trace_context)
+    JE->>Jaeger: 发送span数据
+    TM->>Client: 返回HTTP响应（含trace头）
+    TM->>contextvars: 清理上下文

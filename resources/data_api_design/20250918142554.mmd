@@ -1,0 +1,45 @@
+
+classDiagram
+    class TraceMiddleware {
+        +__init__(app: FastAPI, enable_performance: bool = False)
+        +__call__(scope: dict, receive: callable, send: callable) Awaitable[None]
+    }
+    class TraceContext {
+        +trace_id: str
+        +parent_span_id: str
+        +start_time: float
+        +spans: list[dict]
+        +__init__()
+        +new_span(name: str) dict
+        +close_span(span: dict)
+        +to_dict() dict
+    }
+    class TraceLogger {
+        +__init__(logger_name: str = \"fastapi_trace\")
+        +get_logger() logging.Logger
+        +_trace_filter(record: logging.LogRecord) bool
+    }
+    class PerformanceDecorator {
+        +trace_span(name: str) Callable
+    }
+    class Config {
+        +TRACE_HEADER_NAME: str
+        +LOG_FORMAT: str
+        +ENABLE_JSON_LOG: bool
+        +ENABLE_JAEGER: bool
+        +JAEGER_HOST: str
+        +JAEGER_PORT: int
+        +__init__()
+        +load_from_env()
+    }
+    class JaegerExporter {
+        +__init__(config: Config)
+        +export(trace_context: TraceContext)
+    }
+    TraceMiddleware --> TraceContext : creates and manages
+    TraceLogger --> TraceContext : reads current context
+    PerformanceDecorator --> TraceContext : updates spans
+    JaegerExporter --> TraceContext : consumes
+    TraceMiddleware --> Config : reads settings
+    TraceLogger --> Config : reads LOG_FORMAT, ENABLE_JSON_LOG
+    JaegerExporter --> Config : reads JAEGER_* settings

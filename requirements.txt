@@ -1,0 +1,5 @@
+fastapi
+contextvars
+jaeger-client>=4.0.0
+uvicorn
+opentracing>=2.0.0
