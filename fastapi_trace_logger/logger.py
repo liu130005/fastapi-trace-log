@@ -1,13 +1,11 @@
-## logger.py
-import logging
+# logger.py
 import json
-import contextvars
-from typing import Optional
-from .config import Config
-
+import logging
+import threading
 
 # Async context variable to hold current TraceContext instance (imported from trace_middleware)
-from .trace_middleware import _trace_context_var
+from fastapi_trace_logger.trace_middleware import _trace_context_var
+from .config import Config
 
 
 class TraceLogger:
@@ -38,13 +36,17 @@ class TraceLogger:
         if self.config.is_json_log_enabled:
             return JsonFormatter(self.config.LOG_FORMAT)
         else:
-            return logging.Formatter(self.config.LOG_FORMAT)
+            return TraceFormatter(self.config.LOG_FORMAT)
 
     def _trace_filter(self, record: logging.LogRecord) -> bool:
         """
         Filter that injects trace_id and span_id into log record.
         Returns True to allow log record to be processed.
         """
+        # 添加线程信息
+        record.thread = threading.get_ident()
+        record.threadName = threading.current_thread().name
+
         try:
             trace_context = _trace_context_var.get()
             record.trace_id = trace_context.trace_id
@@ -70,6 +72,20 @@ class TraceLogger:
         return True
 
 
+class TraceFormatter(logging.Formatter):
+    """
+    Custom formatter that includes thread information in traditional log format.
+    """
+
+    def format(self, record):
+        # 确保thread和threadName字段存在
+        if not hasattr(record, 'thread'):
+            record.thread = threading.get_ident()
+        if not hasattr(record, 'threadName'):
+            record.threadName = threading.current_thread().name
+        return super().format(record)
+
+
 class JsonFormatter(logging.Formatter):
     """
     Custom formatter that outputs logs in JSON format.
@@ -82,6 +98,12 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         """Format the log record as a JSON string."""
+        # 添加线程信息
+        if not hasattr(record, 'thread'):
+            record.thread = threading.get_ident()
+        if not hasattr(record, 'threadName'):
+            record.threadName = threading.current_thread().name
+
         log_entry = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
@@ -89,6 +111,8 @@ class JsonFormatter(logging.Formatter):
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
+            "thread_id": record.thread,
+            "thread_name": record.threadName,
         }
 
         # Add trace context if available

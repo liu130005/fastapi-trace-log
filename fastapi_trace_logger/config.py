@@ -1,6 +1,5 @@
-## config.py
+# config.py
 import os
-from typing import Optional
 
 
 class Config:
@@ -20,7 +19,7 @@ class Config:
         # Log format template, supports {trace_id}, {parent_span_id} placeholders
         self.LOG_FORMAT: str = os.getenv(
             "LOG_FORMAT",
-            "[%(asctime)s] [%(levelname)s] [trace_id=%(trace_id)s] [span_id=%(span_id)s] %(message)s"
+            "[%(asctime)s] [%(levelname)s] [thread=%(thread)d:%(threadName)s] [trace_id=%(trace_id)s] [span_id=%(span_id)s] %(message)s"
         )
 
         # Enable JSON-formatted logs

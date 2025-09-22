@@ -1,54 +1,13 @@
-## trace_middleware.py
+# trace_middleware.py
 import asyncio
 import contextvars
 import uuid
-import time
-from typing import Awaitable, Callable, Dict, Any, Optional
+
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from .config import Config
-from .exporter import JaegerExporter
-
-
-class TraceContext:
-    """
-    Trace context manager for storing trace_id, parent_span_id and performance spans.
-    Uses contextvars for async-safe context propagation.
-    """
-
-    def __init__(self, trace_id: Optional[str] = None, parent_span_id: Optional[str] = None):
-        self.trace_id: str = trace_id or str(uuid.uuid4())
-        self.parent_span_id: str = parent_span_id or "0"
-        self.start_time: float = time.time()
-        self.spans: list = []
-
-    def new_span(self, name: str) -> Dict[str, Any]:
-        """Create and register a new span."""
-        span = {
-            "name": name,
-            "span_id": str(uuid.uuid4()),
-            "start_time": time.time(),
-            "end_time": None,
-            "duration": None,
-        }
-        self.spans.append(span)
-        return span
-
-    def close_span(self, span: Dict[str, Any]) -> None:
-        """Mark a span as completed and calculate duration."""
-        span["end_time"] = time.time()
-        span["duration"] = span["end_time"] - span["start_time"]
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert trace context to dictionary for export."""
-        return {
-            "trace_id": self.trace_id,
-            "parent_span_id": self.parent_span_id,
-            "start_time": self.start_time,
-            "duration": time.time() - self.start_time,
-            "spans": self.spans,
-        }
-
+from fastapi_trace_logger.common import TraceContext
+from fastapi_trace_logger.config import Config
+from fastapi_trace_logger.exporter import JaegerExporter
 
 # Async context variable to hold current TraceContext instance
 _trace_context_var: contextvars.ContextVar = contextvars.ContextVar("trace_context")
@@ -103,7 +62,8 @@ class TraceMiddleware:
         # Optionally auto-create root span for the HTTP request
         root_span = None
         if self.enable_performance:
-            root_span = trace_context.new_span("http_request")
+            # HTTP请求的根span，父ID为从header中获取的parent_span_id
+            root_span = trace_context.new_span("http_request", parent_span_id)
 
         # Wrap send to inject trace header and close root span
         async def wrapped_send(message):

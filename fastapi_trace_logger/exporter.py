@@ -1,6 +1,8 @@
 import logging
-import asyncio
 from typing import Optional
+
+from fastapi_trace_logger.common import TraceContext
+from fastapi_trace_logger.config import Config
 
 try:
     from jaeger_client import Config as JaegerConfig
@@ -9,9 +11,6 @@ except ImportError:
     JaegerConfig = None
     Tracer = None
     logging.getLogger(__name__).warning("jaeger_client not installed. JaegerExporter will be disabled.")
-
-from .config import Config
-from .trace_middleware import TraceContext
 
 
 class JaegerExporter:
