@@ -1,5 +1,6 @@
-fastapi
-contextvars
+fastapi~=0.116.2
+contextvars~=2.4
 jaeger-client>=4.0.0
-uvicorn
+uvicorn~=0.35.0
 opentracing>=2.0.0
+starlette~=0.48.0
