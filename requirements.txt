@@ -1,6 +1,9 @@
-fastapi~=0.116.2
-contextvars~=2.4
-jaeger-client>=4.0.0
+torch~=2.8.0
+numpy~=2.3.3
+matplotlib~=3.10.6
+torchvision~=0.23.0
 uvicorn~=0.35.0
-opentracing>=2.0.0
+fastapi~=0.116.2
+jaeger-client~=4.0.0
+contextvars~=2.4
 starlette~=0.48.0
