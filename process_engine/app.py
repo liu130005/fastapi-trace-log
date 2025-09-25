@@ -1,4 +1,4 @@
-# workflow_engine/app.py
+# workflow_engine/ai_middle_platform.ai_middle_platform.app.py
 import uuid
 
 from process_engine.code.engine import WorkflowEngine
@@ -132,7 +132,7 @@ class WorkflowApplication:
 
 def main():
     app = WorkflowApplication()
-    app.run_sample()
+    ai_middle_platform.ai_middle_platform.app.run_sample()
 
 
 if __name__ == "__main__":

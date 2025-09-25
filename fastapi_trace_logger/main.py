@@ -21,10 +21,10 @@ app = FastAPI(
 
 # Add TraceMiddleware to the application
 # enable_performance=True to auto-create spans for HTTP requests
-app.add_middleware(TraceMiddleware, enable_performance=True)
+ai_middle_platform.ai_middle_platform.app.add_middleware(TraceMiddleware, enable_performance=True)
 
 
-@app.get("/")
+@ai_middle_platform.ai_middle_platform.app.get("/")
 async def root():
     trace_logger.info("Handling root endpoint request")
     # 模拟一些处理时间
@@ -32,7 +32,7 @@ async def root():
     return {"message": "Hello World with tracing!"}
 
 
-@app.get("/health")
+@ai_middle_platform.ai_middle_platform.app.get("/health")
 async def health_check():
     trace_logger.info("Health check requested")
 
